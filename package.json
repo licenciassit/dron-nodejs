@@ -1,0 +1,31 @@
+{
+  "name": "dron-nodejs",
+  "version": "1.0.0",
+  "description": "Sistema de detección térmica con cámara dual en TypeScript",
+  "main": "dist/thermal-detector.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/thermal-detector.js",
+    "dev": "tsc && node dist/thermal-detector.js",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "opencv",
+    "thermal",
+    "detection",
+    "drone",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@u4/opencv4nodejs": "^7.1.2",
+    "fs-extra": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.0",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
+  }
+}

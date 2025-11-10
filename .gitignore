@@ -1,0 +1,8 @@
+node_modules/
+videos/
+videos_rgb/
+*.avi
+*.mp4
+*.png
+config.json
+.DS_Store
