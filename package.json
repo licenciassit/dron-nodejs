@@ -2,11 +2,11 @@
   "name": "dron-nodejs",
   "version": "1.0.0",
   "description": "Sistema de detección térmica con cámara dual en TypeScript",
-  "main": "dist/detector-termico.js",
+  "main": "dist/camara.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/detector-termico.js",
-    "dev": "tsc && node dist/detector-termico.js",
+    "start": "node dist/camara.js",
+    "dev": "tsc && node dist/camara.js",
     "test:webcam": "tsc && node dist/prueba-webcam.js",
     "watch": "tsc --watch"
   },

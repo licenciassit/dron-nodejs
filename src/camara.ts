@@ -154,3 +154,32 @@ export function createVideoPath(directory: string, prefix: string): string {
   const timestamp = generateTimestamp();
   return path.join(directory, `${prefix}_${timestamp}.avi`);
 }
+
+// ==================== PUNTO DE EJECUCIÓN PRINCIPAL ====================
+// Este es el módulo padre que controla la ejecución de los módulos hijos
+
+import { main as mainDetectorTermico } from './detector-termico';
+import { sendShutdownMessage } from './telegram';
+
+/**
+ * Función principal del módulo padre
+ * Controla la ejecución de los módulos hijos
+ */
+async function main(): Promise<void> {
+  console.log('🚀 Iniciando sistema desde módulo padre (camara.ts)...\n');
+  
+  // Ejecutar detector térmico (módulo hijo)
+  await mainDetectorTermico();
+}
+
+// Manejo de señales de sistema
+process.on('SIGINT', async () => {
+  console.log('\n⚠️ Deteniendo sistema...');
+  await sendShutdownMessage();
+  process.exit(0);
+});
+
+// Ejecutar sistema
+if (require.main === module) {
+  main().catch(console.error);
+}

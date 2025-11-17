@@ -22,8 +22,9 @@ import {
 
 /**
  * Función principal del detector térmico
+ * EXPORTADA para ser llamada desde el módulo padre (camara.ts)
  */
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   console.log('🔥 Iniciando sistema de detección térmica...');
   
   // Inicializar bots de Telegram (Alta y Baja calidad)
@@ -197,12 +198,4 @@ async function detectPerson(mask: Mat, output: Mat): Promise<void> {
   }
 }
 
-// Manejo de señales
-process.on('SIGINT', async () => {
-  console.log('\n⚠️ Deteniendo sistema...');
-  await sendShutdownMessage();
-  process.exit(0);
-});
-
-// Ejecutar
-main().catch(console.error);
+// Módulo hijo - se ejecuta desde camara.ts (módulo padre)
