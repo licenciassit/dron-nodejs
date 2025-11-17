@@ -13,6 +13,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/opencv4nodejsts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "utils/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
