@@ -26,23 +26,27 @@ Sistema inteligente de vigilancia con cámara térmica USB para Raspberry Pi, di
 
 ## 🏗️ Arquitectura del Código
 
-El proyecto sigue una arquitectura modular padre-hijo:
+El proyecto sigue una arquitectura modular con separación clara de responsabilidades:
 
-### **`src/camara.ts`** (Módulo Padre)
-Proporciona funciones reutilizables para:
-- Configuración centralizada del sistema
-- Inicialización y gestión de cámaras USB
-- Creación de VideoWriter para grabación
-- Utilidades de sistema de archivos
-- Funciones de cálculo (percentiles)
-
-### **`src/detector-termico.ts`** (Módulo Hijo)
-Implementa la lógica específica de detección:
+### **`src/controlador.ts`** (Controlador Principal)
+Módulo ejecutor que contiene toda la lógica de ejecución:
+- **Punto de entrada principal** del sistema
+- Configuración centralizada (CONFIG, TELEGRAM_CONFIG, VIDEO_DIRS)
 - Loop principal de procesamiento de frames
-- Algoritmos de detección de personas/incendios
-- Procesamiento morfológico de máscaras
-- Anotación visual en tiempo real
-- Envío de alertas a Telegram
+- Inicialización y gestión de cámaras USB
+- Manejo de señales del sistema (SIGINT, SIGTERM)
+- Gestión del ciclo de vida completo del sistema
+- Funciones utilitarias (percentile, timestamps, paths)
+- Control de VideoWriter para grabación
+
+### **`src/camara-termica.ts`** (Módulo de Endpoints/Exportadores)
+Módulo de funciones exportadas para detección térmica:
+- `detectFire()` - Endpoint para detección de incendios
+- `detectPerson()` - Endpoint para detección de personas
+- `processFrame()` - Endpoint para procesamiento completo de frames
+- Algoritmos de procesamiento morfológico
+- Lógica de análisis de contornos y máscaras
+- Sin lógica de ejecución (solo funciones exportadas)
 
 ### **`src/telegram.ts`** (Módulo de Notificaciones)
 Maneja la integración con Telegram:
@@ -147,7 +151,7 @@ npm run build
 ## ⚙️ Configuración
 
 ### Parámetros de Detección
-Edita `src/camara.ts` para ajustar la configuración:
+Edita `src/controlador.ts` para ajustar la configuración:
 
 ```typescript
 export const CONFIG = {
@@ -184,7 +188,7 @@ El sistema soporta dos canales de Telegram simultáneos para enviar alertas:
 4. Puedes usar diferentes chats/grupos para HQ y LQ
 
 #### Paso 3: Configurar el Sistema
-Edita `src/camara.ts` y actualiza la configuración de Telegram:
+Edita `src/controlador.ts` y actualiza la configuración de Telegram:
 
 ```typescript
 export const TELEGRAM_CONFIG = {
@@ -299,8 +303,8 @@ Cuando se detecta un **incendio**:
 ```
 dron-nodejs/
 ├── src/
-│   ├── camara.ts              # Módulo padre (funciones base)
-│   ├── detector-termico.ts    # Módulo hijo (detección térmica)
+│   ├── controlador.ts         # Controlador principal (ejecuta todo el sistema)
+│   ├── camara-termica.ts      # Exportadores/Endpoints (funciones de detección)
 │   ├── prueba-webcam.ts       # Módulo de pruebas con webcam
 │   └── telegram.ts            # Integración con Telegram Bot (dual)
 ├── utils/
@@ -351,7 +355,7 @@ npm run watch        # Compilar en modo watch
 
 ## 🔄 Diferencias entre Detector Térmico y Prueba Webcam
 
-| Característica | detector-termico.ts | prueba-webcam.ts |
+| Característica | camara-termica.ts | prueba-webcam.ts |
 |---|---|---|
 | **Cámara** | Cámara térmica USB | Webcam normal RGB |
 | **Resolución** | 160x120 @ 10fps | 640x480 @ 30fps |

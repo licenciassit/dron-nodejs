@@ -156,20 +156,99 @@ export function createVideoPath(directory: string, prefix: string): string {
 }
 
 // ==================== PUNTO DE EJECUCIÓN PRINCIPAL ====================
-// Este es el módulo padre que controla la ejecución de los módulos hijos
+// Este es el módulo controlador que ejecuta toda la lógica del sistema
 
-import { main as mainDetectorTermico } from './detector-termico';
-import { sendShutdownMessage } from './telegram';
+import { processFrame } from './camara-termica';
+import { initTelegramBots, sendShutdownMessage, sendStartupMessage } from './telegram';
 
 /**
- * Función principal del módulo padre
- * Controla la ejecución de los módulos hijos
+ * Función principal del controlador
+ * Ejecuta todo el sistema de detección térmica
  */
 async function main(): Promise<void> {
-  console.log('🚀 Iniciando sistema desde módulo padre (camara.ts)...\n');
+  console.log('🚀 Iniciando sistema desde controlador...\n');
+  console.log('🔥 Sistema de detección térmica iniciado');
   
-  // Ejecutar detector térmico (módulo hijo)
-  await mainDetectorTermico();
+  // Inicializar bots de Telegram (Alta y Baja calidad)
+  initTelegramBots(TELEGRAM_CONFIG);
+  await sendStartupMessage();
+  
+  // Preparar directorios
+  ensureVideoDirectories();
+  deleteOldFiles(VIDEO_DIRS.THERMAL);
+  deleteOldFiles(VIDEO_DIRS.RGB);
+
+  // Inicializar cámara térmica
+  console.log('📹 Buscando cámaras...');
+  const thermalIndex = findUsbCamera();
+  const capThermal = initCamera(thermalIndex);
+
+  if (!testCamera(capThermal)) {
+    console.log('❌ No se pudo abrir la cámara térmica.');
+    capThermal.release();
+    return;
+  }
+
+  console.log('✅ Cámara térmica OK');
+
+  // Configurar grabación
+  const thermalPath = createVideoPath(VIDEO_DIRS.THERMAL, 'thermal');
+  const outThermal = createVideoWriter(thermalPath);
+
+  console.log(`🎥 Grabando en: ${thermalPath}`);
+  console.log('📊 Presiona Ctrl+C para detener');
+
+  // Preparar kernel para procesamiento morfológico
+  const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+  let frameCount: number = 0;
+
+  // Loop principal de procesamiento
+  while (true) {
+    try {
+      const frameThermal = capThermal.read();
+
+      if (frameThermal.empty) {
+        console.log('⚠️ Frame vacío, reintentando...');
+        continue;
+      }
+
+      frameCount++;
+
+      // Procesar solo cada N frames
+      if (frameCount % CONFIG.PROCESS_EVERY_N_FRAMES !== 0) {
+        outThermal.write(frameThermal);
+        continue;
+      }
+
+      // Procesar frame usando el endpoint de camara-termica
+      const processedFrame = await processFrame(
+        frameThermal,
+        kernel,
+        CONFIG.PERSON_PERCENTILE,
+        CONFIG.FIRE_THRESHOLD_ABS,
+        CONFIG.MIN_AREA,
+        CONFIG.MAX_AREA,
+        percentile
+      );
+
+      // Guardar frame procesado
+      outThermal.write(processedFrame);
+
+      if (frameCount % 100 === 0) {
+        console.log(`📹 Frames procesados: ${frameCount}`);
+      }
+
+    } catch (error) {
+      console.error('❌ Error en loop:', error);
+      break;
+    }
+  }
+
+  // Liberar recursos
+  capThermal.release();
+  outThermal.release();
+  
+  console.log('✅ Grabación finalizada');
 }
 
 // Manejo de señales de sistema
